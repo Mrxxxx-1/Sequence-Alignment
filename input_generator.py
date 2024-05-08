@@ -2,7 +2,7 @@
 Author: Mrx
 Date: 2024-05-04 16:59:54
 LastEditors: Mrx
-LastEditTime: 2024-05-04 19:00:16
+LastEditTime: 2024-05-07 22:26:47
 FilePath: \Sequence-Alignment\input_generator.py
 Description: 
 
@@ -15,7 +15,7 @@ def input(input_path):
         with open(input_path, 'r') as input_file:
                 lines = input_file.readlines()
                 lines = [line.rstrip('\n') for line in lines]
-                print(lines)
+                # print(lines)
                 t0 = []
                 t1 = []
                 # Find the index of the first occurrence of a non-numeric string
@@ -24,8 +24,8 @@ def input(input_path):
                 if index is not None:
                     t0 = lines[:index]
                     t1 = lines[index:]
-                print(index)
-                print(t0)
+                # print(index)
+                # print(t0)
                 data = []
                 data.append(generator(t0))
                 data.append(generator(t1))
@@ -39,10 +39,11 @@ def generator(list):
         s = s[:index] + s + s[index:]
     return s
 
-def output(output_path,data):
+def output(output_path,data_list):
     try:
         with open(output_path, 'w') as output_file:
-            output_file.write(data)
+            for line in data_list:
+                output_file.write(str(line)+'\n')
     except FileNotFoundError:
         print("Path not found.Please make sure the output path is correct.")
 
@@ -54,7 +55,7 @@ def main():
     input_path = sys.argv[1]
     output_path = sys.argv[2]
     data = input(input_path)
-    output(output_path,data[0])
+    output(output_path,data)
 
 # Call the main function
 if __name__ == "__main__":
