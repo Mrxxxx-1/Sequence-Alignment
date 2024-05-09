@@ -2,7 +2,7 @@
 Author: Mrx
 Date: 2024-05-04 16:39:06
 LastEditors: Mrx
-LastEditTime: 2024-05-08 22:48:40
+LastEditTime: 2024-05-08 23:41:49
 FilePath: \Sequence-Alignment\efficient_3.py
 Description: 
 
@@ -13,7 +13,7 @@ import time
 import psutil
 
 gap = 30
-
+infinity = float("inf")
 mismatch = {"AA":0, "AC":110, "AG": 48, "AT":94, "CA":110, "CC":0, "CG":118, "CT":48, 
             "GA":48, "GC":118, "GG":0, "GT":110, "TA": 94, "TC":48, "TG":110, "TT":0}
 
@@ -64,50 +64,120 @@ def process_memory():
     memory_info = process.memory_info()
     memory_consumed = int(memory_info.rss/1024) 
     return memory_consumed
-
-def efficient(data):
+def basic(data):
     m = len(data[0])
     n = len(data[1])
-    def divide_and_conquer_helper(X, Y):
-        m = len(X)
-        n = len(Y)
 
-        if m == 0:
-            return n * gap, '', '_' * n
-        elif n == 0:
-            return m * gap, '_' * m, ''
+    array = [[infinity for _ in range(n+1)] for _ in range(m+1)]
+    
+    # Setting values for [0][k] and [k][0]
+    for k in range(n+1):
+        array[0][k] = k * gap
+    
+    for k in range(m+1):
+        array[k][0] = k * gap
+    for i in range(1,m+1):
+        for j in range(1,n+1):
+            ms = data[0][i-1] + data[1][j-1]
+            array[i][j] = min((array[i-1][j-1]+mismatch[ms]), 
+                              (array[i-1][j]+gap), (array[i][j-1])+gap )
+    # print(array[m][n])
+    alignment_data_0 = ''
+    alignment_data_1 = ''
+    i, j = m, n
+    while i > 0 or j > 0:
+        if i > 0 and j > 0 and array[i][j] == array[i-1][j-1] + mismatch[data[0][i-1] + data[1][j-1]]:
+            alignment_data_0 = data[0][i-1] + alignment_data_0
+            alignment_data_1 = data[1][j-1] + alignment_data_1
+            i -= 1
+            j -= 1
+        elif i > 0 and array[i][j] == array[i-1][j] + gap:
+            alignment_data_0 = data[0][i-1] + alignment_data_0
+            alignment_data_1 = '_' + alignment_data_1
+            i -= 1
+        else:
+            alignment_data_0 = '_' + alignment_data_0
+            alignment_data_1 = data[1][j-1] + alignment_data_1
+            j -= 1
 
-        # Split X into halves
-        mid = m // 2
-        Xl = X[:mid]
-        Xr = X[mid:]
+    # print("Alignment of data[0]:", alignment_data_0)
+    # print("Alignment of data[1]:", alignment_data_1)
+    data_list=[]
+    data_list.append(array[m][n])
+    data_list.append(alignment_data_0)
+    data_list.append(alignment_data_1)
+    return data_list
 
-        # Compute the optimal split point in Y
-        min_cost = float('inf')
-        split_point = 0
-        for k in range(n+1):
-            cost_left, _, _ = divide_and_conquer_helper(Xr, Y[:k])
-            cost_right, _, _ = divide_and_conquer_helper(Xl, Y[k:])
-            total_cost = cost_left + cost_right
-            if total_cost < min_cost:
-                min_cost = total_cost
-                split_point = k
+def eff_bottom_up(str_1, str_2):
+    # Initialize the OPT matrix
+    m = len(str_1) + 1
+    n = len(str_2) + 1
+    OPT = [0 for _ in range(m)]
 
-        # Compute the optimal alignments for Xl and Xr with respect to Y
-        cost_left, align_left_X, align_left_Y = divide_and_conquer_helper(Xl, Y[:split_point])
-        cost_right, align_right_X, align_right_Y = divide_and_conquer_helper(Xr, Y[split_point:])
+    # Initialize first column
+    for i in range(m):
+        OPT[i] = i * gap
 
-        # Combine alignments
-        total_cost = cost_left + cost_right
-        alignment_X = align_left_X + align_right_X
-        alignment_Y = align_left_Y + align_right_Y
+    # Bottom-up pass
+    for j in range(1, n):
+        temp_OPT = [0 for _ in range(m)]
+        temp_OPT[0] = j * gap
+        for i in range(1, m):
+            gap_1 = temp_OPT[i - 1] + gap  
+            gap_2 = OPT[i] + gap 
+            # Match/Mismatch
+            alpha = OPT[i - 1] + mismatch[str_1[i - 1]+str_2[j - 1]]
+            temp_OPT[i] = min(gap_1, gap_2, alpha)
 
-        return total_cost, alignment_X, alignment_Y
+        OPT = temp_OPT
 
-    # Invoke helper function
-    total_cost, alignment_X, alignment_Y = divide_and_conquer_helper(data[0], data[1])
+    return OPT
 
-    return [total_cost, alignment_X, alignment_Y]
+
+def divide(cost, str_1, str_2, ):
+    # General cases for DnC
+    if not (len(str_1) <= 2 or len(str_2) <= 2):
+        # Divide str_2 by half
+        idx = len(str_2) // 2
+        str_2_l = str_2[:idx]
+        str_2_r = str_2[idx:]
+
+        # Find OPT arrays for left and right strings
+        OPT_left = eff_bottom_up(str_1, str_2_l)
+        OPT_right = eff_bottom_up(str_1[::-1], str_2_r[::-1])[::-1]
+
+        # Initialize min optimal value and index
+        min_idx = None
+        min_cost = infinity
+
+        # Find the optimal split
+        for idx in range(len(OPT_right)):
+            opt_cost = OPT_left[idx] + OPT_right[idx]
+            if opt_cost < min_cost:
+                min_cost = opt_cost
+                min_idx = idx
+
+        # Dive str_1 into 2 according to min idx
+        str_1_l = str_1[:min_idx]
+        str_1_r = str_1[min_idx:]
+
+        # Recursive call to the divide function for left and right strings
+        opt_cost_l, str_1_l_opt, str_2_l_opt= divide(
+            cost, str_1_l, str_2_l
+        )
+        opt_cost_r, str_1_r_opt, str_2_r_opt= divide(
+            cost, str_1_r, str_2_r
+        )
+
+        str_1_opt = str_1_l_opt + str_1_r_opt
+        str_2_opt = str_2_l_opt + str_2_r_opt
+        opt_cost = opt_cost_l + opt_cost_r
+
+        return [opt_cost, str_1_opt, str_2_opt]
+
+    # Base case for DnC
+    else:
+        return basic([str_1, str_2])
 
 
 def main():
@@ -118,19 +188,18 @@ def main():
     input_path = sys.argv[1]
     output_path = sys.argv[2]
     data = input(input_path)
-    data_list=efficient(data)
-    print(data_list)
-    # start_time = time.time() 
-    # data_list=efficient(data)
-    # end_time = time.time()
-    # time_taken = (end_time - start_time)*1000 
+
+    start_time = time.time() 
+    data_list=divide(3,data[0],data[1])
+    end_time = time.time()
+    time_taken = (end_time - start_time)*1000 
     
-    # memory=process_memory()
+    memory=process_memory()
     
-    # data_list.append(time_taken)
-    # data_list.append(memory)
+    data_list.append(time_taken)
+    data_list.append(memory)
     
-    # output(output_path,data_list)
+    output(output_path,data_list)
 
 # Call the main function
 if __name__ == "__main__":

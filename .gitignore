@@ -4,3 +4,5 @@ SampleTestCases/
 datapoints/
 *.docx
 *.txt
+test.py
+ref.py
