@@ -2,17 +2,15 @@
 Author: Mrx
 Date: 2024-05-04 16:38:36
 LastEditors: Mrx
-LastEditTime: 2024-05-07 22:30:20
+LastEditTime: 2024-05-08 22:48:05
 FilePath: \Sequence-Alignment\basic_3.py
 Description: 
 
 Copyright (c) 2024 by Mrx, All Rights Reserved. 
 '''
 import sys
-# from resource import * 
 import time
 import psutil
-from input_generator import * 
 
 gap = 30
 mismatch = {"AA":0, "AC":110, "AG": 48, "AT":94, "CA":110, "CC":0, "CG":118, "CT":48, 
@@ -25,18 +23,48 @@ infinity = 23600
 3. Second string alignment ( Consists of A, C, T, G, _ (gap) characters )
 4. Time in Milliseconds (Float)
 5. Memory in Kilobytes (Float)'''
+def input(input_path):
+    try:
+        with open(input_path, 'r') as input_file:
+                lines = input_file.readlines()
+                lines = [line.rstrip('\n') for line in lines]
+                # print(lines)
+                t0 = []
+                t1 = []
+                # Find the index of the first occurrence of a non-numeric string
+                index = next((i for i, x in enumerate(lines[1:]) if not x.isdigit()), None)
+                index += 1
+                if index is not None:
+                    t0 = lines[:index]
+                    t1 = lines[index:]
+                # print(index)
+                # print(t0)
+                data = []
+                data.append(generator(t0))
+                data.append(generator(t1))
+                return data
+    except FileNotFoundError:
+        print("File not found. Please make sure the input path is correct.")
+def generator(list):
+    s = list[0]
+    for item in list[1:]:
+        index = int(item) + 1
+        s = s[:index] + s + s[index:]
+    return s
+
+def output(output_path,data_list):
+    try:
+        with open(output_path, 'w') as output_file:
+            for line in data_list:
+                output_file.write(str(line)+'\n')
+    except FileNotFoundError:
+        print("Path not found.Please make sure the output path is correct.")
 def process_memory():
     process = psutil.Process() 
     memory_info = process.memory_info()
     memory_consumed = int(memory_info.rss/1024) 
     return memory_consumed
 
-def time_wrapper(data): 
-    start_time = time.time() 
-    basic(data)
-    end_time = time.time()
-    time_taken = (end_time - start_time)*1000 
-    return time_taken
 
 def basic(data):
     m = len(data[0])
@@ -85,18 +113,26 @@ def basic(data):
     # print(len(array))
 
 def main():
+    start_time = time.time()
     if len(sys.argv) != 3:
         print("Usage: python input_generator.py input_path output_path")
         return
     
     input_path = sys.argv[1]
     output_path = sys.argv[2]
+
     data = input(input_path)
+
+ 
     data_list=basic(data)
+    end_time = time.time()
+    time_taken = (end_time - start_time)*1000 
+    
     memory=process_memory()
-    # print(memory)
-    data_list.append(time_wrapper(data))
+    
+    data_list.append(time_taken)
     data_list.append(memory)
+    
     output(output_path,data_list)
 
 # Call the main function

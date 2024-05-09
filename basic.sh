@@ -8,4 +8,4 @@
  # 
  # Copyright (c) 2024 by Mrx, All Rights Reserved. 
 ### 
-python3 basic_3.py "$1" "$2"
+python basic_3.py "$1" "$2"
