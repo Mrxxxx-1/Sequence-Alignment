@@ -2,7 +2,7 @@
 Author: Mrx
 Date: 2024-05-04 16:39:06
 LastEditors: Mrx
-LastEditTime: 2024-05-08 23:41:49
+LastEditTime: 2024-05-09 21:57:07
 FilePath: \Sequence-Alignment\efficient_3.py
 Description: 
 
@@ -181,6 +181,9 @@ def divide(cost, str_1, str_2, ):
 
 
 def main():
+    process = psutil.Process() 
+    memory_info1 = process.memory_info()
+    memory_consumed1 = int(memory_info1.rss/1024) 
     if len(sys.argv) != 3:
         print("Usage: python input_generator.py input_path output_path")
         return
@@ -194,11 +197,12 @@ def main():
     end_time = time.time()
     time_taken = (end_time - start_time)*1000 
     
-    memory=process_memory()
+    memory_info2 = process.memory_info()
+    memory_consumed2 = int(memory_info2.rss/1024) 
+    memory = memory_consumed2 - memory_consumed1
     
     data_list.append(time_taken)
     data_list.append(memory)
-    
     output(output_path,data_list)
 
 # Call the main function

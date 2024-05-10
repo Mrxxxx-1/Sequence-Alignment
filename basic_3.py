@@ -2,7 +2,7 @@
 Author: Mrx
 Date: 2024-05-04 16:38:36
 LastEditors: Mrx
-LastEditTime: 2024-05-08 22:48:05
+LastEditTime: 2024-05-09 21:57:28
 FilePath: \Sequence-Alignment\basic_3.py
 Description: 
 
@@ -113,7 +113,11 @@ def basic(data):
     # print(len(array))
 
 def main():
-    start_time = time.time()
+    process = psutil.Process() 
+    memory_info1 = process.memory_info()
+    memory_consumed1 = int(memory_info1.rss/1024) 
+
+    
     if len(sys.argv) != 3:
         print("Usage: python input_generator.py input_path output_path")
         return
@@ -123,13 +127,14 @@ def main():
 
     data = input(input_path)
 
- 
+    start_time = time.time()
     data_list=basic(data)
     end_time = time.time()
     time_taken = (end_time - start_time)*1000 
     
-    memory=process_memory()
-    
+    memory_info2 = process.memory_info()
+    memory_consumed2 = int(memory_info2.rss/1024) 
+    memory = memory_consumed2 - memory_consumed1
     data_list.append(time_taken)
     data_list.append(memory)
     

@@ -6,3 +6,9 @@ datapoints/
 *.txt
 test.py
 ref.py
+*.tmp
+*.pdf
+*.png
+memory.py
+output.txt
+output.txt
